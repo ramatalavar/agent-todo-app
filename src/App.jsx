@@ -2,91 +2,112 @@ import { useState } from 'react'
 
 function App() {
   const [todos, setTodos] = useState([])
-  const [newTodo, setNewTodo] = useState('')
+  const [inputValue, setInputValue] = useState('')
   const [filter, setFilter] = useState('all')
 
-  const addTodo = () => {
-    if (newTodo.trim() === '') return
-    const todo = {
+  const addTodo = (e) => {
+    e.preventDefault()
+    if (inputValue.trim() === '') return
+    
+    const newTodo = {
       id: Date.now(),
-      text: newTodo,
+      text: inputValue.trim(),
       completed: false
     }
-    setTodos([...todos, todo])
-    setNewTodo('')
+    
+    setTodos([...todos, newTodo])
+    setInputValue('')
+  }
+
+  const toggleTodo = (id) => {
+    setTodos(todos.map(todo => 
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    ))
   }
 
   const deleteTodo = (id) => {
     setTodos(todos.filter(todo => todo.id !== id))
   }
 
-  const toggleComplete = (id) => {
-    setTodos(todos.map(todo =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ))
+  const getFilteredTodos = () => {
+    switch (filter) {
+      case 'active':
+        return todos.filter(todo => !todo.completed)
+      case 'completed':
+        return todos.filter(todo => todo.completed)
+      default:
+        return todos
+    }
   }
 
-  const filteredTodos = todos.filter(todo => {
-    if (filter === 'active') return !todo.completed
-    if (filter === 'completed') return todo.completed
-    return true
-  })
-
-  const remainingCount = todos.filter(todo => !todo.completed).length
+  const filteredTodos = getFilteredTodos()
+  const activeCount = todos.filter(todo => !todo.completed).length
 
   return (
-    <div className="app">
-      <h1>Todo App</h1>
+    <div className="container">
+      <div className="header">
+        <h1>Todo App</h1>
+      </div>
       
-      <div className="add-todo">
+      <form className="todo-input-container" onSubmit={addTodo}>
         <input
           type="text"
-          value={newTodo}
-          onChange={(e) => setNewTodo(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && addTodo()}
           placeholder="What needs to be done?"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
         />
-        <button onClick={addTodo}>Add</button>
-      </div>
-
+      </form>
+      
       <ul className="todo-list">
-        {filteredTodos.map(todo => (
-          <li key={todo.id} className={todo.completed ? 'completed' : ''}>
-            <input
-              type="checkbox"
-              checked={todo.completed}
-              onChange={() => toggleComplete(todo.id)}
-            />
-            <span>{todo.text}</span>
-            <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
-              Delete
-            </button>
+        {filteredTodos.length === 0 ? (
+          <li className="empty-state">
+            {filter === 'all' 
+              ? 'No todos yet. Add one above!'
+              : filter === 'active'
+                ? 'No active todos'
+                : 'No completed todos'
+            }
           </li>
-        ))}
+        ) : (
+          filteredTodos.map(todo => (
+            <li key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''}`}>
+              <input
+                type="checkbox"
+                className="todo-checkbox"
+                checked={todo.completed}
+                onChange={() => toggleTodo(todo.id)}
+              />
+              <span className="todo-text">{todo.text}</span>
+              <button 
+                className="delete-btn"
+                onClick={() => deleteTodo(todo.id)}
+              >
+                Delete
+              </button>
+            </li>
+          ))
+        )}
       </ul>
-
-      <div className="filters">
-        <span>{remainingCount} items left</span>
-        <div className="filter-buttons">
-          <button
-            className={filter === 'all' ? 'active' : ''}
-            onClick={() => setFilter('all')}
-          >
-            All
-          </button>
-          <button
-            className={filter === 'active' ? 'active' : ''}
-            onClick={() => setFilter('active')}
-          >
-            Active
-          </button>
-          <button
-            className={filter === 'completed' ? 'active' : ''}
-            onClick={() => setFilter('completed')}
-          >
-            Completed
-          </button>
-        </div>
+      
+      <div className="filter-container">
+        <button
+          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+          onClick={() => setFilter('all')}
+        >
+          All {todos.length > 0 && `(${todos.length})`}
+        </button>
+        <button
+          className={`filter-btn ${filter === 'active' ? 'active' : ''}`}
+          onClick={() => setFilter('active')}
+        >
+          Active {activeCount > 0 && `(${activeCount})`}
+        </button>
+        <button
+          className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
+          onClick={() => setFilter('completed')}
+        >
+          Completed ({todos.length - activeCount})
+        </button>
       </div>
     </div>
   )

@@ -2,23 +2,26 @@ import { useState } from 'react'
 
 function App() {
   const [todos, setTodos] = useState([])
+  const [newTodo, setNewTodo] = useState('')
   const [filter, setFilter] = useState('all')
 
-  const addTodo = (text) => {
-    const newTodo = {
+  const addTodo = () => {
+    if (newTodo.trim() === '') return
+    const todo = {
       id: Date.now(),
-      text,
+      text: newTodo,
       completed: false
     }
-    setTodos([...todos, newTodo])
+    setTodos([...todos, todo])
+    setNewTodo('')
   }
 
   const deleteTodo = (id) => {
     setTodos(todos.filter(todo => todo.id !== id))
   }
 
-  const toggleTodo = (id) => {
-    setTodos(todos.map(todo => 
+  const toggleComplete = (id) => {
+    setTodos(todos.map(todo =>
       todo.id === id ? { ...todo, completed: !todo.completed } : todo
     ))
   }
@@ -29,56 +32,62 @@ function App() {
     return true
   })
 
+  const remainingCount = todos.filter(todo => !todo.completed).length
+
   return (
     <div className="app">
       <h1>Todo App</h1>
       
       <div className="add-todo">
-        <input 
-          type="text" 
-          placeholder="Add a new task..."
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && e.target.value.trim()) {
-              addTodo(e.target.value.trim())
-              e.target.value = ''
-            }
-          }}
+        <input
+          type="text"
+          value={newTodo}
+          onChange={(e) => setNewTodo(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addTodo()}
+          placeholder="What needs to be done?"
         />
-      </div>
-
-      <div className="filters">
-        <button 
-          className={filter === 'all' ? 'active' : ''} 
-          onClick={() => setFilter('all')}
-        >
-          All
-        </button>
-        <button 
-          className={filter === 'active' ? 'active' : ''} 
-          onClick={() => setFilter('active')}
-        >
-          Active
-        </button>
-        <button 
-          className={filter === 'completed' ? 'active' : ''} 
-          onClick={() => setFilter('completed')}
-        >
-          Completed
-        </button>
+        <button onClick={addTodo}>Add</button>
       </div>
 
       <ul className="todo-list">
         {filteredTodos.map(todo => (
           <li key={todo.id} className={todo.completed ? 'completed' : ''}>
-            <span onClick={() => toggleTodo(todo.id)}>
-              {todo.text}
-            </span>
-            <button onClick={() => deleteTodo(todo.id)}>Delete</button>
+            <input
+              type="checkbox"
+              checked={todo.completed}
+              onChange={() => toggleComplete(todo.id)}
+            />
+            <span>{todo.text}</span>
+            <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
+              Delete
+            </button>
           </li>
         ))}
       </ul>
 
-      {todos.length === 0 && <p className="empty-message">No tasks yet. Add one above!</p>}
+      <div className="filters">
+        <span>{remainingCount} items left</span>
+        <div className="filter-buttons">
+          <button
+            className={filter === 'all' ? 'active' : ''}
+            onClick={() => setFilter('all')}
+          >
+            All
+          </button>
+          <button
+            className={filter === 'active' ? 'active' : ''}
+            onClick={() => setFilter('active')}
+          >
+            Active
+          </button>
+          <button
+            className={filter === 'completed' ? 'active' : ''}
+            onClick={() => setFilter('completed')}
+          >
+            Completed
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
